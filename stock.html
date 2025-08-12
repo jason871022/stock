@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股債配置與未來資產推算</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .intro-block {
+            background-color: #e8f5fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .intro-block h3 {
+            border-bottom: none;
+            padding-bottom: 0;
+            color: #3498db;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+        }
+        .button-group button {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            background-color: #f8f8f8;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .button-group button.selected {
+            border-color: #3498db;
+            background-color: #e8f5fd;
+            color: #3498db;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .button-group button:hover:not(.selected) {
+            border-color: #95a5a6;
+        }
+        #calculate-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        #calculate-btn:hover {
+            background-color: #2980b9;
+        }
+        .allocation-formula {
+            font-style: italic;
+            color: #7f8c8d;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+        .result-section {
+            background-color: #ecf0f1;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        .allocation-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .allocation-chart-container {
+            width: 250px;
+            height: 250px;
+        }
+        .allocation-summary {
+            flex-grow: 1;
+        }
+        .allocation-summary p {
+            margin: 5px 0;
+        }
+        .chart-container {
+            margin-top: 20px;
+        }
+        .disclaimer {
+            font-size: 12px;
+            color: #e74c3c;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .financial-summary {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .financial-summary .item {
+            font-size: 1.2em;
+        }
+        .financial-summary .value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .card {
+            flex: 1;
+            min-width: 150px;
+            padding: 20px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative; /* For tooltip positioning */
+        }
+        .card:hover {
+            border-color: #3498db;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .card.selected {
+            border-color: #3498db;
+            background-color: #e8f5fd;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .card strong {
+            display: block;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        #tooltip {
+            position: fixed;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-width: 350px;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #tooltip h4 {
+            margin: 0 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            color: #3498db;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>股債配置與未來資產推算</h1>
+
+        <div class="intro-block">
+            <h3>什麼是股債配置？</h3>
+            <p>股債配置是將投資資金分配於股票與債券等不同資產類別的策略。股票代表成長潛力與較高波動，而債券則提供穩定收益與市場下跌時的緩衝。透過合理的配置，投資人能平衡風險與報酬，使資產組合更符合個人目標與風險偏好。</p>
+        </div>
+        
+        <h2>配置比例計算</h2>
+        <div class="input-group">
+            <label for="age-slider">您的年齡： <span id="age-display">30</span> 歲</label>
+            <input type="range" id="age-slider" min="18" max="100" value="30" oninput="updateAllocation()">
+        </div>
+
+        <div class="input-group">
+            <label>您的風險承受度：</label>
+            <div class="button-group" id="risk-buttons">
+                <button data-risk="conservative" onclick="selectRisk('conservative')">保守型</button>
+                <button data-risk="moderate" onclick="selectRisk('moderate')" class="selected">穩健型</button>
+                <button data-risk="aggressive" onclick="selectRisk('aggressive')">積極型</button>
+            </div>
+        </div>
+        <p class="allocation-formula">計算方式：股債比 = 110 - 年齡 (依照風險程度微調)</p>
+
+        <div class="result-section">
+            <h3>您的建議配置</h3>
+            <div class="allocation-info">
+                <div class="allocation-chart-container">
+                    <canvas id="allocationPieChart"></canvas>
+                </div>
+                <div class="allocation-summary">
+                    <p><strong>股票比例：</strong> <span id="stock-percentage"></span></p>
+                    <p><strong>債券比例：</strong> <span id="bond-percentage"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <h2>未來資產推算</h2>
+        <div class="input-group">
+            <label for="start-capital">起始資金：(新臺幣)</label>
+            <input type="number" id="start-capital" value="100000" min="0">
+        </div>
+        <div class="input-group">
+            <label for="monthly-deposit">每月定期定額：(新臺幣)</label>
+            <input type="number" id="monthly-deposit" value="10000" min="0">
+        </div>
+        <div class="input-group">
+            <label for="years">投入年數：(年)</label>
+            <input type="number" id="years" value="20" min="1" max="50">
+        </div>
+        <div class="input-group">
+            <label>您對未來市場的看法：</label>
+            <div class="button-group" id="outlook-buttons">
+                <button data-outlook="bullish" onclick="selectOutlook('bullish')">牛市</button>
+                <button data-outlook="flat" onclick="selectOutlook('flat')" class="selected">平盤</button>
+                <button data-outlook="bearish" onclick="selectOutlook('bearish')">熊市</button>
+            </div>
+        </div>
+        <button id="calculate-btn" onclick="calculateProjection()">開始推算</button>
+        
+        <div class="result-section chart-container">
+            <h3>模擬資產成長圖</h3>
+            <canvas id="projectionChart"></canvas>
+            <div class="financial-summary">
+                <div class="item">
+                    <div>投入成本</div>
+                    <div class="value" id="total-cost">NT$ 0</div>
+                </div>
+                <div class="item">
+                    <div>預期資產總值</div>
+                    <div class="value" id="final-value">NT$ 0</div>
+                </div>
+                <div class="item">
+                    <div>預期報酬</div>
+                    <div class="value" id="expected-return">NT$ 0</div>
+                </div>
+            </div>
+            <p class="disclaimer">
+                ※ **免責聲明：** 本圖表為模擬情境，採用假設性的年化報酬率。實際投資績效可能隨市場波動而有巨大差異。
+            </p>
+        </div>
+
+        <h2>如何實現此配置</h2>
+        <div class="input-group">
+            <label>投資區域選擇：</label>
+            <div class="button-group">
+                <button data-region="taiwan" onclick="selectRegion('taiwan')" class="selected">台灣</button>
+                <button data-region="usa" onclick="selectRegion('usa')">美國</button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>股票標的選擇：</label>
+            <div class="cards-container" id="stock-cards-taiwan">
+                <div class="card selected" data-etf="0050" data-type="stock">
+                    <strong>0050</strong>
+                    <span>元大台灣50</span>
+                </div>
+                <div class="card" data-etf="006208" data-type="stock">
+                    <strong>006208</strong>
+                    <span>富邦台50</span>
+                </div>
+            </div>
+            <div class="cards-container hidden" id="stock-cards-usa">
+                <div class="card" data-etf="VT" data-type="stock">
+                    <strong>VT</strong>
+                    <span>Vanguard Total World Stock ETF</span>
+                </div>
+                <div class="card" data-etf="VOO" data-type="stock">
+                    <strong>VOO</strong>
+                    <span>Vanguard S&P 500 ETF</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <label>債券標的選擇：</label>
+            <div class="cards-container" id="bond-cards-taiwan">
+                <div class="card selected" data-etf="00751B" data-type="bond">
+                    <strong>00751B</strong>
+                    <span>元大AAA至A公司債</span>
+                </div>
+            </div>
+            <div class="cards-container hidden" id="bond-cards-usa">
+                <div class="card" data-etf="TLT" data-type="bond">
+                    <strong>TLT</strong>
+                    <span>iShares 20+ Year Treasury Bond ETF</span>
+                </div>
+                <div class="card" data-etf="GOVT" data-type="bond">
+                    <strong>GOVT</strong>
+                    <span>iShares U.S. Treasury Bond ETF</span>
+                </div>
+            </div>
+        </div>
+        <div id="tooltip" style="opacity:0;"></div>
+
+    </div>
+    <footer>
+        <p>&copy; 2025 股債配置與未來推算. 所有權利保留。</p>
+    </footer>
+
+    <script>
+        let projectionChart;
+        let allocationPieChart;
+        let selectedRisk = 'moderate';
+        let selectedOutlook = 'flat';
+        let selectedRegion = 'taiwan';
+        let selectedStockETF = '0050';
+        let selectedBondETF = '00751B';
+
+        const etfReturns = {
+            '0050': { bullish: 0.10, flat: 0.07, bearish: -0.02 },
+            '006208': { bullish: 0.10, flat: 0.07, bearish: -0.02 },
+            'VT': { bullish: 0.10, flat: 0.08, bearish: -0.03 },
+            'VOO': { bullish: 0.12, flat: 0.08, bearish: -0.02 },
+            '00751B': { bullish: 0.04, flat: 0.03, bearish: 0.02 },
+            'TLT': { bullish: 0.03, flat: 0.02, bearish: 0.05 },
+            'GOVT': { bullish: 0.04, flat: 0.03, bearish: 0.03 }
+        };
+
+        const etfInfo = {
+            '0050': {
+                'title': '0050 元大台灣50',
+                'description': '追蹤「臺灣50指數」，成分股由上市股票中評選出50檔市值最大的股票，是投資台灣大盤的熱門工具。',
+                'index': '臺灣50指數',
+                'expenseRatio': '0.15% (依規模計算)',
+                'source': '元大投信'
+            },
+            '006208': {
+                'title': '006208 富邦台50',
+                'description': '與0050一樣追蹤「臺灣50指數」，成分股為台灣市值前50大企業，提供台股大盤的投資選擇。',
+                'index': '臺灣50指數',
+                'expenseRatio': '0.15% (依規模計算)',
+                'source': '富邦投信、股感知識庫'
+            },
+            '00751B': {
+                'title': '00751B 元大AAA至A公司債',
+                'description': '主要投資於信用評等為高投資等級（AAA至A）的美國公司債，價格走勢與美國公債高度相關，且信用風險較低。',
+                'index': '彭博美國20+年期AAA-A公司債流動性指數',
+                'expenseRatio': '經理費與保管費約 0.24%',
+                'source': '股股學院、玉山證券'
+            },
+            'VT': {
+                'title': 'VT Vanguard Total World Stock ETF',
+                'description': '提供「一站式」佈局全球股市的ETF，涵蓋美國、歐洲、亞洲與新興市場等約9,000檔股票，強調多元分散與低成本。',
+                'index': 'FTSE Global All Cap Index',
+                'expenseRatio': '0.06% (2025年2月1日調整)',
+                'source': '口袋證券、市場先生'
+            },
+            'VOO': {
+                'title': 'VOO Vanguard S&P 500 ETF',
+                'description': '追蹤美國標普500指數，投資美國市值前500大企業，成分股與產業分布廣泛，是分散投資美國大型股的理想選擇。',
+                'index': 'S&P 500 Index',
+                'expenseRatio': '0.03%',
+                'source': 'StockFeel 股感、MoneyDJ理財網'
+            },
+            'TLT': {
+                'title': 'TLT iShares 20+ Year Treasury Bond ETF',
+                'description': '投資於美國長天期（20年以上）的政府公債，被視為無風險資產，在大跌或熊市期間常有不錯表現。對利率變動非常敏感。',
+                'index': 'ICE U.S. Treasury 20+ Year Bond Index',
+                'expenseRatio': '0.15%',
+                'source': 'MoneyDJ理財網、股股學院、Yale Chen'
+            },
+            'GOVT': {
+                'title': 'GOVT iShares U.S. Treasury Bond ETF',
+                'description': '追蹤ICE美國國債核心債券指數，涵蓋1至30年到期日的美國國債，提供安全、低波動的投資選擇。',
+                'index': 'ICE U.S. Treasury Core Bond Index',
+                'expenseRatio': '0.05% (2021/1/4起)',
+                'source': '口袋證券'
+            }
+        };
+
+        function showTooltip(event) {
+            const card = event.currentTarget;
+            const etf = card.dataset.etf;
+            const info = etfInfo[etf];
+            
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = `
+                <h4>${info.title}</h4>
+                <p><strong>簡介：</strong>${info.description}</p>
+                <p><strong>追蹤指數：</strong>${info.index}</p>
+                <p><strong>費用率：</strong>${info.expenseRatio}</p>
+                <p><strong>資料來源：</strong>${info.source}</p>
+            `;
+            
+            tooltip.style.opacity = '1';
+            tooltip.style.left = `${card.getBoundingClientRect().right + 15}px`;
+            tooltip.style.top = `${card.getBoundingClientRect().top + window.scrollY}px`;
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').style.opacity = '0';
+        }
+
+        function selectRisk(riskLevel) {
+            document.querySelectorAll('#risk-buttons button').forEach(button => {
+                button.classList.remove('selected');
+            });
+            document.querySelector(`button[data-risk="${riskLevel}"]`).classList.add('selected');
+            selectedRisk = riskLevel;
+            updateAllocation();
+        }
+
+        function selectRegion(region) {
+            document.querySelectorAll('.button-group button[data-region]').forEach(button => {
+                button.classList.remove('selected');
+            });
+            document.querySelector(`button[data-region="${region}"]`).classList.add('selected');
+            selectedRegion = region;
+            
+            document.getElementById('stock-cards-taiwan').classList.add('hidden');
+            document.getElementById('stock-cards-usa').classList.add('hidden');
+            document.getElementById('bond-cards-taiwan').classList.add('hidden');
+            document.getElementById('bond-cards-usa').classList.add('hidden');
+            
+            document.getElementById(`stock-cards-${region}`).classList.remove('hidden');
+            document.getElementById(`bond-cards-${region}`).classList.remove('hidden');
+            
+            // 預設選擇第一個 ETF
+            const newStockETF = document.querySelector(`#stock-cards-${region} .card`).dataset.etf;
+            const newBondETF = document.querySelector(`#bond-cards-${region} .card`).dataset.etf;
+            selectETF(newStockETF, 'stock');
+            selectETF(newBondETF, 'bond');
+        }
+
+        function selectETF(etf, type) {
+            document.querySelectorAll(`.card[data-type="${type}"]`).forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`.card[data-etf="${etf}"]`).classList.add('selected');
+            
+            if (type === 'stock') {
+                selectedStockETF = etf;
+            } else {
+                selectedBondETF = etf;
+            }
+        }
+
+        function selectOutlook(outlook) {
+            document.querySelectorAll('#outlook-buttons button').forEach(button => {
+                button.classList.remove('selected');
+            });
+            document.querySelector(`button[data-outlook="${outlook}"]`).classList.add('selected');
+            selectedOutlook = outlook;
+        }
+
+        function updateAllocation() {
+            const age = document.getElementById('age-slider').value;
+            
+            document.getElementById('age-display').innerText = age;
+            
+            let stockPercentage;
+            let bondPercentage;
+            
+            let baseStock = 110 - age;
+            
+            if (selectedRisk === 'aggressive') {
+                stockPercentage = Math.min(100, Math.round(baseStock + 10));
+            } else if (selectedRisk === 'moderate') {
+                stockPercentage = Math.round(baseStock);
+            } else { // conservative
+                stockPercentage = Math.max(0, Math.round(baseStock - 10));
+            }
+            
+            bondPercentage = 100 - stockPercentage;
+
+            document.getElementById('stock-percentage').innerText = `${stockPercentage}%`;
+            document.getElementById('bond-percentage').innerText = `${bondPercentage}%`;
+
+            drawPieChart(stockPercentage, bondPercentage);
+        }
+
+        function drawPieChart(stockP, bondP) {
+            const pieData = {
+                labels: ['股票', '債券'],
+                datasets: [{
+                    data: [stockP, bondP],
+                    backgroundColor: ['#e74c3c', '#3498db'],
+                    hoverOffset: 4
+                }]
+            };
+
+            if (allocationPieChart) {
+                allocationPieChart.data = pieData;
+                allocationPieChart.update();
+            } else {
+                const pieCtx = document.getElementById('allocationPieChart').getContext('2d');
+                allocationPieChart = new Chart(pieCtx, {
+                    type: 'pie',
+                    data: pieData,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                        }
+                    }
+                });
+            }
+        }
+
+        function calculateProjection() {
+            const startCapital = parseFloat(document.getElementById('start-capital').value);
+            const monthlyDeposit = parseFloat(document.getElementById('monthly-deposit').value);
+            const years = parseInt(document.getElementById('years').value);
+            
+            if (isNaN(startCapital) || isNaN(monthlyDeposit) || isNaN(years) || years <= 0) {
+                alert('請輸入有效的數字');
+                return;
+            }
+            
+            const stockReturn = etfReturns[selectedStockETF][selectedOutlook];
+            const bondReturn = etfReturns[selectedBondETF][selectedOutlook];
+
+            const monthlyStockReturn = Math.pow(1 + stockReturn, 1/12) - 1;
+            const monthlyBondReturn = Math.pow(1 + bondReturn, 1/12) - 1;
+
+            const allocationData = [];
+            const allStockData = [];
+            const allBondData = [];
+            const labels = [];
+            
+            const stockAllocation = parseFloat(document.getElementById('stock-percentage').innerText) / 100;
+            const bondAllocation = parseFloat(document.getElementById('bond-percentage').innerText) / 100;
+            
+            let allocationValue = startCapital;
+            let allStockValue = startCapital;
+            let allBondValue = startCapital;
+
+            for (let i = 0; i <= years * 12; i++) {
+                if (i % 12 === 0) {
+                    labels.push(`第${i/12}年`);
+                    allocationData.push(Math.round(allocationValue));
+                    allStockData.push(Math.round(allStockValue));
+                    allBondData.push(Math.round(allBondValue));
+                }
+                
+                allocationValue = allocationValue * (1 + stockAllocation * monthlyStockReturn + bondAllocation * monthlyBondReturn) + monthlyDeposit;
+                allStockValue = allStockValue * (1 + monthlyStockReturn) + monthlyDeposit;
+                allBondValue = allBondValue * (1 + monthlyBondReturn) + monthlyDeposit;
+            }
+
+            const totalCost = startCapital + (monthlyDeposit * 12 * years);
+            const finalValue = allocationData[allocationData.length - 1];
+            const expectedReturn = finalValue - totalCost;
+
+            document.getElementById('total-cost').innerText = `NT$ ${totalCost.toLocaleString()}`;
+            document.getElementById('final-value').innerText = `NT$ ${finalValue.toLocaleString()}`;
+            document.getElementById('expected-return').innerText = `NT$ ${expectedReturn.toLocaleString()}`;
+            
+            drawProjectionChart(labels, allocationData, allStockData, allBondData, selectedOutlook);
+        }
+
+        function drawProjectionChart(labels, allocationData, allStockData, allBondData, outlook) {
+            const outlookText = outlook === 'bullish' ? '牛市' : outlook === 'flat' ? '平盤' : '熊市';
+
+            const chartData = {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '您的配置',
+                        data: allocationData,
+                        borderColor: '#3498db',
+                        backgroundColor: '#3498db',
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '100% 股票',
+                        data: allStockData,
+                        borderColor: '#e74c3c',
+                        backgroundColor: '#e74c3c',
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '100% 債券',
+                        data: allBondData,
+                        borderColor: '#2ecc71',
+                        backgroundColor: '#2ecc71',
+                        tension: 0.3,
+                        fill: false
+                    }
+                ]
+            };
+
+            if (projectionChart) {
+                projectionChart.data = chartData;
+                projectionChart.options.plugins.title.text = `模擬資產成長圖 (${outlookText}情境)`;
+                projectionChart.update();
+            } else {
+                const ctx = document.getElementById('projectionChart').getContext('2d');
+                projectionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: `模擬資產成長圖 (${outlookText}情境)`
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: '資產總值 (新臺幣)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // 使用更穩定的 DOMContentLoaded 事件監聽器來初始化頁面
+        document.addEventListener('DOMContentLoaded', () => {
+            // 頁面載入時，為所有卡片新增事件監聽器
+            const etfCards = document.querySelectorAll('.card');
+            etfCards.forEach(card => {
+                card.addEventListener('mouseenter', showTooltip);
+                card.addEventListener('mouseleave', hideTooltip);
+                card.addEventListener('click', (event) => {
+                    selectETF(event.currentTarget.dataset.etf, event.currentTarget.dataset.type);
+                });
+            });
+
+            // 初始化頁面
+            selectRegion('taiwan');
+            updateAllocation();
+            calculateProjection();
+        });
+    </script>
+</body>
+</html>
