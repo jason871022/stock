@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股債配置與未來資產推算</title>
+    <style>
+        /* 基礎樣式 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .intro-block {
+            background-color: #e8f5fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .intro-block h3 {
+            border-bottom: none;
+            padding-bottom: 0;
+            color: #3498db;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="range"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="range"] {
+            padding: 0;
+            cursor: pointer;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px; /* 稍微減少間距以節省空間 */
+            flex-wrap: wrap; /* 允許按鈕換行，避免擠壓 */
+        }
+        .button-group button {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            background-color: #f8f8f8;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .button-group button.selected {
+            border-color: #3498db;
+            background-color: #e8f5fd;
+            color: #3498db;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .button-group button:hover:not(.selected) {
+            border-color: #95a5a6;
+        }
+        #calculate-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        #calculate-btn:hover {
+            background-color: #2980b9;
+        }
+        .allocation-formula {
+            font-style: italic;
+            color: #7f8c8d;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+        .result-section {
+            background-color: #ecf0f1;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        .allocation-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .allocation-chart-container {
+            width: 250px;
+            height: 250px;
+            flex-shrink: 0; /* 避免在小螢幕被壓縮 */
+        }
+        .allocation-summary {
+            flex-grow: 1;
+        }
+        .allocation-summary p {
+            margin: 5px 0;
+            font-size: 1.1em;
+        }
+        .chart-container {
+            margin-top: 20px;
+        }
+        .disclaimer {
+            font-size: 12px;
+            color: #e74c3c;
+            margin-top: 10px;
+            text-align: center;
+        }
+        /* 新增：讓表格在小螢幕上可以水平捲動 */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch; /* 為了 iOS 裝置的捲動體驗 */
+            margin-top: 20px;
+        }
+        .financial-summary {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1em;
+            text-align: center;
+            min-width: 600px; /* 設置最小寬度，確保表格內容不會被壓縮 */
+        }
+        .financial-summary th, .financial-summary td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            white-space: nowrap; /* 避免文字換行 */
+        }
+        .financial-summary th {
+            background-color: #fff;
+            color: #2c3e50;
+        }
+        .advanced-metrics {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .advanced-metrics .metric {
+            font-size: 1.1em;
+        }
+        .advanced-metrics .value {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        /* 針對小螢幕（行動裝置）的樣式調整 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px; /* 減少整體頁面邊距 */
+            }
+            .container {
+                padding: 20px 15px; /* 調整容器內部邊距 */
+                border-radius: 0; /* 移除圓角讓內容更滿版 */
+                box-shadow: none; /* 移除陰影 */
+            }
+            h1, h2 {
+                font-size: 1.8em;
+            }
+            h3 {
+                font-size: 1.3em;
+            }
+            .intro-block {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            
+            /* 將圓餅圖與文字說明改為垂直堆疊 */
+            .allocation-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            .allocation-chart-container {
+                width: 100%;
+                height: auto;
+                max-width: 250px; /* 保持圖表不會過大 */
+                margin-bottom: 20px;
+            }
+            
+            /* 將進階指標也改為垂直堆疊 */
+            .advanced-metrics {
+                flex-direction: column;
+                align-items: center;
+            }
+            .advanced-metrics .metric {
+                margin-bottom: 10px;
+            }
+
+            .button-group button {
+                flex-basis: auto; /* 讓按鈕不再固定佔滿空間 */
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>股債配置與未來資產推算</h1>
+
+        <div class="intro-block">
+            <h3>什麼是股債配置？</h3>
+            <p>股債配置是將投資資金分配於股票與債券等不同資產類別的策略。股票代表成長潛力與較高波動，而債券則提供穩定收益與市場下跌時的緩衝。透過合理的配置，投資人能平衡風險與報酬，使資產組合更符合個人目標與風險偏好。</p>
+        </div>
+        
+        <h2>配置比例計算</h2>
+        <div class="input-group">
+            <label for="age-slider">您的年齡： <span id="age-display">30</span> 歲</label>
+            <input type="range" id="age-slider" min="18" max="100" value="30" oninput="updateAllocation()">
+        </div>
+
+        <div class="input-group">
+            <label>您的風險承受度：</label>
+            <div class="button-group" id="risk-buttons">
+                <button data-risk="conservative" onclick="selectRisk('conservative')">保守型</button>
+                <button data-risk="moderate" onclick="selectRisk('moderate')" class="selected">穩健型</button>
+                <button data-risk="aggressive" onclick="selectRisk('aggressive')">積極型</button>
+            </div>
+        </div>
+        <p class="allocation-formula">計算方式：股債比 = 110 - 年齡 (依照風險程度微調)</p>
+
+        <div class="result-section">
+            <h3>您的建議配置</h3>
+            <div class="allocation-info">
+                <div class="allocation-chart-container">
+                    <canvas id="allocationPieChart"></canvas>
+                </div>
+                <div class="allocation-summary">
+                    <p><strong>股票比例：</strong> <span id="stock-percentage"></span></p>
+                    <p><strong>債券比例：</strong> <span id="bond-percentage"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <h2>未來資產推算</h2>
+        <div class="input-group">
+            <label for="start-capital">起始資金：(新臺幣)</label>
+            <input type="number" id="start-capital" value="100000" min="0">
+        </div>
+        <div class="input-group">
+            <label for="monthly-deposit">每月定期定額：(新臺幣)</label>
+            <input type="number" id="monthly-deposit" value="10000" min="0">
+        </div>
+        <div class="input-group">
+            <label for="years">投入年數：(年)</label>
+            <input type="number" id="years" value="20" min="1" max="50">
+        </div>
+        <div class="input-group">
+            <label>您對未來市場的看法：</label>
+            <div class="button-group" id="outlook-buttons">
+                <button data-outlook="bullish" onclick="selectOutlook('bullish')">牛市</button>
+                <button data-outlook="flat" onclick="selectOutlook('flat')" class="selected">平盤</button>
+                <button data-outlook="bearish" onclick="selectOutlook('bearish')">熊市</button>
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="inflation-rate">年通膨率：(%)</label>
+            <input type="number" id="inflation-rate" value="2" min="0" max="10" step="0.1">
+        </div>
+        <button id="calculate-btn" onclick="calculateProjection()">開始推算</button>
+        
+        <div class="result-section chart-container">
+            <h3>模擬資產成長圖</h3>
+            <canvas id="projectionChart"></canvas>
+            
+            <div class="table-wrapper">
+                <table class="financial-summary">
+                    <thead>
+                        <tr>
+                            <th>配置類型</th>
+                            <th>投入成本</th>
+                            <th>預期資產總值</th>
+                            <th>預期報酬</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>您的配置</td>
+                            <td id="total-cost-user">NT$ 0</td>
+                            <td id="final-value-user">NT$ 0</td>
+                            <td id="expected-return-user">NT$ 0</td>
+                        </tr>
+                        <tr>
+                            <td>100% 股票</td>
+                            <td id="total-cost-stock">NT$ 0</td>
+                            <td id="final-value-stock">NT$ 0</td>
+                            <td id="expected-return-stock">NT$ 0</td>
+                        </tr>
+                        <tr>
+                            <td>100% 債券</td>
+                            <td id="total-cost-bond">NT$ 0</td>
+                            <td id="final-value-bond">NT$ 0</td>
+                            <td id="expected-return-bond">NT$ 0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="advanced-metrics">
+                <div class="metric">
+                    <div>年化報酬率 (CAGR)</div>
+                    <div class="value" id="cagr-value">0.00%</div>
+                </div>
+            </div>
+            <p class="disclaimer">
+                ※ 免責聲明：本圖表為模擬情境，採用假設性的年化報酬率。實際投資績效可能隨市場波動而有巨大差異。
+            </p>
+        </div>
+    </div>
+    <footer>
+        <p>&copy; 2025 GoodFinance, Jason Lee. 所有權利保留。</p>
+    </footer>
+
+    <script>
+        let projectionChart;
+        let allocationPieChart;
+        let selectedRisk = 'moderate';
+        let selectedOutlook = 'flat';
+        let stockReturn = 0.08;
+        let bondReturn = 0.04;
+
+        const etfReturns = {
+            'stock': { bullish: 0.10, flat: 0.06, bearish: -0.02 },
+            'bond': { bullish: 0.05, flat: 0.03, bearish: 0.02 }
+        };
+
+        function selectRisk(riskLevel) {
+            document.querySelectorAll('#risk-buttons button').forEach(button => {
+                button.classList.remove('selected');
+            });
+            document.querySelector(`button[data-risk="${riskLevel}"]`).classList.add('selected');
+            selectedRisk = riskLevel;
+            updateAllocation();
+        }
+
+        function selectOutlook(outlook) {
+            document.querySelectorAll('#outlook-buttons button').forEach(button => {
+                button.classList.remove('selected');
+            });
+            document.querySelector(`button[data-outlook="${outlook}"]`).classList.add('selected');
+            selectedOutlook = outlook;
+        }
+
+        function updateAllocation() {
+            const age = document.getElementById('age-slider').value;
+            
+            document.getElementById('age-display').innerText = age;
+            
+            let stockPercentage;
+            let bondPercentage;
+            
+            let baseStock = 110 - age;
+            
+            if (selectedRisk === 'aggressive') {
+                stockPercentage = Math.min(100, Math.round(baseStock + 10));
+            } else if (selectedRisk === 'moderate') {
+                stockPercentage = Math.round(baseStock);
+            } else { // conservative
+                stockPercentage = Math.max(0, Math.round(baseStock - 10));
+            }
+            
+            bondPercentage = 100 - stockPercentage;
+
+            document.getElementById('stock-percentage').innerText = `${stockPercentage}%`;
+            document.getElementById('bond-percentage').innerText = `${bondPercentage}%`;
+
+            drawPieChart(stockPercentage, bondPercentage);
+        }
+
+        function drawPieChart(stockP, bondP) {
+            const pieData = {
+                labels: ['股票', '債券'],
+                datasets: [{
+                    data: [stockP, bondP],
+                    backgroundColor: ['#e74c3c', '#3498db'],
+                    hoverOffset: 4
+                }]
+            };
+
+            if (allocationPieChart) {
+                allocationPieChart.data = pieData;
+                allocationPieChart.update();
+            } else {
+                const pieCtx = document.getElementById('allocationPieChart').getContext('2d');
+                allocationPieChart = new Chart(pieCtx, {
+                    type: 'pie',
+                    data: pieData,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                        }
+                    }
+                });
+            }
+        }
+
+        function calculateProjection() {
+            const startCapital = parseFloat(document.getElementById('start-capital').value);
+            const monthlyDeposit = parseFloat(document.getElementById('monthly-deposit').value);
+            const years = parseInt(document.getElementById('years').value);
+            const inflationRate = parseFloat(document.getElementById('inflation-rate').value) / 100;
+            
+            if (isNaN(startCapital) || isNaN(monthlyDeposit) || isNaN(years) || years <= 0 || isNaN(inflationRate)) {
+                alert('請輸入有效的數字');
+                return;
+            }
+
+            const currentStockReturn = etfReturns['stock'][selectedOutlook];
+            const currentBondReturn = etfReturns['bond'][selectedOutlook];
+
+            const monthlyStockReturn = Math.pow(1 + currentStockReturn, 1/12) - 1;
+            const monthlyBondReturn = Math.pow(1 + currentBondReturn, 1/12) - 1;
+            
+            const stockAllocation = parseFloat(document.getElementById('stock-percentage').innerText) / 100;
+            const bondAllocation = parseFloat(document.getElementById('bond-percentage').innerText) / 100;
+
+            const allocationData = [];
+            const allStockData = [];
+            const allBondData = [];
+            
+            let allocationValue = startCapital;
+            let allStockValue = startCapital;
+            let allBondValue = startCapital;
+            
+            let totalInvestment = startCapital;
+
+            const labels = [];
+
+            for (let i = 0; i <= years * 12; i++) {
+                if (i > 0) {
+                    totalInvestment += monthlyDeposit;
+                }
+                
+                allocationValue = allocationValue * (1 + stockAllocation * monthlyStockReturn + bondAllocation * monthlyBondReturn) + monthlyDeposit;
+                allStockValue = allStockValue * (1 + monthlyStockReturn) + monthlyDeposit;
+                allBondValue = allBondValue * (1 + monthlyBondReturn) + monthlyDeposit;
+                
+                if (i % 12 === 0) {
+                    labels.push(`第${i/12}年`);
+                    
+                    const inflationFactor = Math.pow(1 + inflationRate, i / 12);
+                    allocationData.push(Math.round(allocationValue / inflationFactor));
+                    allStockData.push(Math.round(allStockValue / inflationFactor));
+                    allBondData.push(Math.round(allBondValue / inflationFactor));
+                }
+            }
+
+            const finalValue_user = allocationData[allocationData.length - 1];
+            const finalValue_stock = allStockData[allStockData.length - 1];
+            const finalValue_bond = allBondData[allBondData.length - 1];
+            
+            const totalCost = startCapital + (monthlyDeposit * 12 * years);
+            const cagr = (finalValue_user && startCapital) ? (Math.pow(finalValue_user / startCapital, 1 / years) - 1) : 0;
+
+            document.getElementById('total-cost-user').innerText = `NT$ ${totalInvestment.toLocaleString()}`;
+            document.getElementById('final-value-user').innerText = `NT$ ${finalValue_user.toLocaleString()}`;
+            document.getElementById('expected-return-user').innerText = `NT$ ${(finalValue_user - totalInvestment).toLocaleString()}`;
+            
+            document.getElementById('total-cost-stock').innerText = `NT$ ${totalInvestment.toLocaleString()}`;
+            document.getElementById('final-value-stock').innerText = `NT$ ${finalValue_stock.toLocaleString()}`;
+            document.getElementById('expected-return-stock').innerText = `NT$ ${(finalValue_stock - totalCost).toLocaleString()}`;
+
+            document.getElementById('total-cost-bond').innerText = `NT$ ${totalInvestment.toLocaleString()}`;
+            document.getElementById('final-value-bond').innerText = `NT$ ${finalValue_bond.toLocaleString()}`;
+            document.getElementById('expected-return-bond').innerText = `NT$ ${(finalValue_bond - totalCost).toLocaleString()}`;
+            
+            document.getElementById('cagr-value').innerText = `${(cagr * 100).toFixed(2)}%`;
+            
+            drawProjectionChart(labels, allocationData, allStockData, allBondData, selectedOutlook);
+        }
+
+        function drawProjectionChart(labels, allocationData, allStockData, allBondData, outlook) {
+            const outlookText = outlook === 'bullish' ? '牛市' : outlook === 'flat' ? '平盤' : '熊市';
+
+            const chartData = {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '您的配置 (扣除通膨)',
+                        data: allocationData,
+                        borderColor: '#3498db',
+                        backgroundColor: '#3498db',
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '100% 股票 (扣除通膨)',
+                        data: allStockData,
+                        borderColor: '#e74c3c',
+                        backgroundColor: '#e74c3c',
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '100% 債券 (扣除通膨)',
+                        data: allBondData,
+                        borderColor: '#2ecc71',
+                        backgroundColor: '#2ecc71',
+                        tension: 0.3,
+                        fill: false
+                    }
+                ]
+            };
+
+            if (projectionChart) {
+                projectionChart.data = chartData;
+                projectionChart.options.plugins.title.text = `模擬資產成長圖 (${outlookText}情境)`;
+                projectionChart.update();
+            } else {
+                const ctx = document.getElementById('projectionChart').getContext('2d');
+                projectionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, /* 新增: 避免長寬比例被鎖定，讓圖表能有彈性 */
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: `模擬資產成長圖 (${outlookText}情境)`
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: '資產總值 (新臺幣)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            updateAllocation();
+            calculateProjection();
+        });
+    </script>
+</body>
+</html>
