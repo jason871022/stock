@@ -153,22 +153,17 @@
             margin-top: 10px;
             text-align: center;
         }
-        .table-wrapper {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin-top: 20px;
-        }
+        
         .financial-summary {
             width: 100%;
             border-collapse: collapse;
             font-size: 1em;
             text-align: center;
-            min-width: 600px;
+            margin-top: 20px;
         }
         .financial-summary th, .financial-summary td {
             padding: 12px;
             border: 1px solid #ddd;
-            white-space: nowrap;
         }
         .financial-summary th {
             background-color: #fff;
@@ -196,6 +191,7 @@
             font-size: 14px;
         }
 
+        /* 針對小螢幕（行動裝置）的樣式調整 */
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -235,6 +231,35 @@
             }
             .button-group button {
                 flex-basis: auto;
+            }
+
+            /* 核心修正：將表格轉為垂直堆疊 */
+            .financial-summary {
+                border: 0;
+            }
+            .financial-summary thead {
+                display: none; /* 隱藏表頭 */
+            }
+            .financial-summary tr {
+                display: block; /* 每列變成一個區塊 */
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+            }
+            .financial-summary td {
+                display: block; /* 每個儲存格變成一個區塊 */
+                text-align: right; /* 文字靠右對齊 */
+                padding-left: 50%; /* 為標籤騰出空間 */
+                position: relative;
+                border: none;
+            }
+            .financial-summary td::before {
+                content: attr(data-label); /* 顯示 data-label 屬性中的文字 */
+                position: absolute;
+                left: 10px;
+                width: calc(50% - 20px);
+                font-weight: bold;
+                text-align: left;
             }
         }
     </style>
@@ -312,41 +337,36 @@
                 <canvas id="projectionChart"></canvas>
             </div>
             
-            <p style="text-align: center; font-size: 0.9em; color: #777;">
-                <small>※ 在手機上可左右滑動表格以查看更多內容</small>
-            </p>
-            <div class="table-wrapper">
-                <table class="financial-summary">
-                    <thead>
-                        <tr>
-                            <th>配置類型</th>
-                            <th>投入成本</th>
-                            <th>預期資產總值</th>
-                            <th>預期報酬</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>您的配置</td>
-                            <td id="total-cost-user">NT$ 0</td>
-                            <td id="final-value-user">NT$ 0</td>
-                            <td id="expected-return-user">NT$ 0</td>
-                        </tr>
-                        <tr>
-                            <td>100% 股票</td>
-                            <td id="total-cost-stock">NT$ 0</td>
-                            <td id="final-value-stock">NT$ 0</td>
-                            <td id="expected-return-stock">NT$ 0</td>
-                        </tr>
-                        <tr>
-                            <td>100% 債券</td>
-                            <td id="total-cost-bond">NT$ 0</td>
-                            <td id="final-value-bond">NT$ 0</td>
-                            <td id="expected-return-bond">NT$ 0</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <table class="financial-summary">
+                <thead>
+                    <tr>
+                        <th>配置類型</th>
+                        <th>投入成本</th>
+                        <th>預期資產總值</th>
+                        <th>預期報酬</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td data-label="配置類型">您的配置</td>
+                        <td data-label="投入成本" id="total-cost-user">NT$ 0</td>
+                        <td data-label="預期資產總值" id="final-value-user">NT$ 0</td>
+                        <td data-label="預期報酬" id="expected-return-user">NT$ 0</td>
+                    </tr>
+                    <tr>
+                        <td data-label="配置類型">100% 股票</td>
+                        <td data-label="投入成本" id="total-cost-stock">NT$ 0</td>
+                        <td data-label="預期資產總值" id="final-value-stock">NT$ 0</td>
+                        <td data-label="預期報酬" id="expected-return-stock">NT$ 0</td>
+                    </tr>
+                    <tr>
+                        <td data-label="配置類型">100% 債券</td>
+                        <td data-label="投入成本" id="total-cost-bond">NT$ 0</td>
+                        <td data-label="預期資產總值" id="final-value-bond">NT$ 0</td>
+                        <td data-label="預期報酬" id="expected-return-bond">NT$ 0</td>
+                    </tr>
+                </tbody>
+            </table>
 
             <div class="advanced-metrics">
                 <div class="metric">
