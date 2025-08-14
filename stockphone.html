@@ -63,8 +63,8 @@
         }
         .button-group {
             display: flex;
-            gap: 10px; /* 稍微減少間距以節省空間 */
-            flex-wrap: wrap; /* 允許按鈕換行，避免擠壓 */
+            gap: 10px;
+            flex-wrap: wrap;
         }
         .button-group button {
             flex: 1;
@@ -122,7 +122,7 @@
         .allocation-chart-container {
             width: 250px;
             height: 250px;
-            flex-shrink: 0; /* 避免在小螢幕被壓縮 */
+            flex-shrink: 0;
         }
         .allocation-summary {
             flex-grow: 1;
@@ -131,19 +131,31 @@
             margin: 5px 0;
             font-size: 1.1em;
         }
-        .chart-container {
+        
+        .chart-wrapper {
+            position: relative;
+            height: 0;
+            padding-bottom: 75%;
+            overflow: hidden;
             margin-top: 20px;
         }
+        .chart-wrapper canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
         .disclaimer {
             font-size: 12px;
             color: #e74c3c;
             margin-top: 10px;
             text-align: center;
         }
-        /* 新增：讓表格在小螢幕上可以水平捲動 */
         .table-wrapper {
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch; /* 為了 iOS 裝置的捲動體驗 */
+            -webkit-overflow-scrolling: touch;
             margin-top: 20px;
         }
         .financial-summary {
@@ -151,12 +163,12 @@
             border-collapse: collapse;
             font-size: 1em;
             text-align: center;
-            min-width: 600px; /* 設置最小寬度，確保表格內容不會被壓縮 */
+            min-width: 600px;
         }
         .financial-summary th, .financial-summary td {
             padding: 12px;
             border: 1px solid #ddd;
-            white-space: nowrap; /* 避免文字換行 */
+            white-space: nowrap;
         }
         .financial-summary th {
             background-color: #fff;
@@ -184,15 +196,14 @@
             font-size: 14px;
         }
 
-        /* 針對小螢幕（行動裝置）的樣式調整 */
         @media (max-width: 768px) {
             body {
-                padding: 10px; /* 減少整體頁面邊距 */
+                padding: 10px;
             }
             .container {
-                padding: 20px 15px; /* 調整容器內部邊距 */
-                border-radius: 0; /* 移除圓角讓內容更滿版 */
-                box-shadow: none; /* 移除陰影 */
+                padding: 20px 15px;
+                border-radius: 0;
+                box-shadow: none;
             }
             h1, h2 {
                 font-size: 1.8em;
@@ -204,20 +215,17 @@
                 padding: 15px;
                 margin-bottom: 20px;
             }
-            
-            /* 將圓餅圖與文字說明改為垂直堆疊 */
             .allocation-info {
                 flex-direction: column;
                 text-align: center;
             }
             .allocation-chart-container {
                 width: 100%;
-                height: auto;
-                max-width: 250px; /* 保持圖表不會過大 */
+                max-width: 250px;
                 margin-bottom: 20px;
+                height: 250px;
+                margin: 0 auto 20px;
             }
-            
-            /* 將進階指標也改為垂直堆疊 */
             .advanced-metrics {
                 flex-direction: column;
                 align-items: center;
@@ -225,9 +233,8 @@
             .advanced-metrics .metric {
                 margin-bottom: 10px;
             }
-
             .button-group button {
-                flex-basis: auto; /* 讓按鈕不再固定佔滿空間 */
+                flex-basis: auto;
             }
         }
     </style>
@@ -301,8 +308,13 @@
         
         <div class="result-section chart-container">
             <h3>模擬資產成長圖</h3>
-            <canvas id="projectionChart"></canvas>
+            <div class="chart-wrapper">
+                <canvas id="projectionChart"></canvas>
+            </div>
             
+            <p style="text-align: center; font-size: 0.9em; color: #777;">
+                <small>※ 在手機上可左右滑動表格以查看更多內容</small>
+            </p>
             <div class="table-wrapper">
                 <table class="financial-summary">
                     <thead>
@@ -556,7 +568,7 @@
                     data: chartData,
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false, /* 新增: 避免長寬比例被鎖定，讓圖表能有彈性 */
+                        maintainAspectRatio: true,
                         plugins: {
                             legend: {
                                 position: 'top',
